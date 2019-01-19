@@ -8,6 +8,7 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
+import android.support.annotation.RequiresApi;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.app.LoaderManager.LoaderCallbacks;
@@ -22,6 +23,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -32,8 +34,11 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import org.hopto.mycloud.mycloud.Request;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static android.Manifest.permission.READ_CONTACTS;
 
@@ -65,6 +70,9 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     private View mProgressView;
     private View mLoginFormView;
     private Account mAccount;
+    private String clientId;
+    private String clientSecret;
+    private String serverUrl;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,6 +107,9 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
+        clientSecret = getString(R.string.client_secret);
+        clientId = getString(R.string.client_id);
+        serverUrl = getString(R.string.server_url);
     }
 
     private void populateAutoComplete() {
@@ -311,14 +322,17 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             mPassword = password;
         }
 
+        @RequiresApi(api = Build.VERSION_CODES.N)
         @Override
         protected Boolean doInBackground(Void... params) {
-            // TODO: attempt authentication against a network service.
-
+            Map<String, String> authParams = packParams();
+            String url = getString(R.string.server_url);
             try {
-                // Simulate network access.
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
+                Request request = new Request(url, "POST", authParams);
+                String response = request.getAccessToken();
+                Log.w("AUTH", response);
+            } catch (Exception e) {
+                Log.w("AUTH", e.getMessage());
                 return false;
             }
 
@@ -351,6 +365,17 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         protected void onCancelled() {
             mAuthTask = null;
             showProgress(false);
+        }
+
+        private Map<String, String> packParams() {
+            Map<String, String> map = new HashMap<>();
+            map.put("grant_type", getString(R.string.grant_type));
+            map.put("username", mEmail);
+            map.put("password", mPassword);
+            map.put("scope", getString(R.string.scope));
+            map.put("client_secret", getString(R.string.client_secret));
+            map.put("client_id", getString(R.string.client_id));
+            return map;
         }
     }
 
