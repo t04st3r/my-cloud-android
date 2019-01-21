@@ -34,7 +34,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import org.hopto.mycloud.mycloud.Request;
+import org.hopto.mycloud.mycloud.api.AuthRequest;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -53,16 +54,9 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     private static final int REQUEST_READ_CONTACTS = 0;
 
     /**
-     * A dummy authentication store containing known user names and passwords.
-     * TODO: remove after connecting to a real authentication system.
-     */
-    private static final String[] DUMMY_CREDENTIALS = new String[]{
-            "foo@example.com:hello", "bar@example.com:world"
-    };
-    /**
      * Keep track of the login task to ensure we can cancel it if requested.
      */
-    private UserLoginTask mAuthTask = null;
+    private AuthRequest mAuthTask = null;
 
     // UI references.
     private AutoCompleteTextView mEmailView;
@@ -70,19 +64,16 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     private View mProgressView;
     private View mLoginFormView;
     private Account mAccount;
-    private String clientId;
-    private String clientSecret;
-    private String serverUrl;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         // Set up the login form.
-        mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
+        mEmailView = findViewById(R.id.email);
         populateAutoComplete();
 
-        mPasswordView = (EditText) findViewById(R.id.password);
+        mPasswordView = findViewById(R.id.password);
         mPasswordView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView textView, int id, KeyEvent keyEvent) {
@@ -97,7 +88,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         mAccount = getUserAccount(LoginActivity.this);
 
 
-        Button mEmailSignInButton = (Button) findViewById(R.id.email_sign_in_button);
+        Button mEmailSignInButton = findViewById(R.id.email_sign_in_button);
         mEmailSignInButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -107,9 +98,19 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
-        clientSecret = getString(R.string.client_secret);
-        clientId = getString(R.string.client_id);
-        serverUrl = getString(R.string.server_url);
+    }
+
+    /**
+     * pasword view getter
+     * @return
+     */
+    public EditText getmPasswordView(){
+        return this.mPasswordView;
+    }
+
+
+    public void destroyAuthTask(){
+        this.mAuthTask = null;
     }
 
     private void populateAutoComplete() {
@@ -203,7 +204,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
             showProgress(true);
-            mAuthTask = new UserLoginTask(email, password);
+            mAuthTask = new AuthRequest(this, email, password);
             mAuthTask.execute((Void) null);
         }
     }
@@ -222,7 +223,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
      * Shows the progress UI and hides the login form.
      */
     @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
-    private void showProgress(final boolean show) {
+    public void showProgress(final boolean show) {
         // On Honeycomb MR2 we have the ViewPropertyAnimator APIs, which allow
         // for very easy animations. If available, use these APIs to fade-in
         // the progress spinner.
@@ -306,77 +307,6 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
         int ADDRESS = 0;
         int IS_PRIMARY = 1;
-    }
-
-    /**
-     * Represents an asynchronous login/registration task used to authenticate
-     * the user.
-     */
-    public class UserLoginTask extends AsyncTask<Void, Void, Boolean> {
-
-        private final String mEmail;
-        private final String mPassword;
-
-        UserLoginTask(String email, String password) {
-            mEmail = email;
-            mPassword = password;
-        }
-
-        @RequiresApi(api = Build.VERSION_CODES.N)
-        @Override
-        protected Boolean doInBackground(Void... params) {
-            Map<String, String> authParams = packParams();
-            String url = getString(R.string.server_url);
-            try {
-                Request request = new Request(url, "POST", authParams);
-                String response = request.getAccessToken();
-                Log.w("AUTH", response);
-            } catch (Exception e) {
-                Log.w("AUTH", e.getMessage());
-                return false;
-            }
-
-            for (String credential : DUMMY_CREDENTIALS) {
-                String[] pieces = credential.split(":");
-                if (pieces[0].equals(mEmail)) {
-                    // Account exists, return true if the password matches.
-                    return pieces[1].equals(mPassword);
-                }
-            }
-
-            // TODO: register the new account here.
-            return true;
-        }
-
-        @Override
-        protected void onPostExecute(final Boolean success) {
-            mAuthTask = null;
-            showProgress(false);
-
-            if (success) {
-                finish();
-            } else {
-                mPasswordView.setError(getString(R.string.error_incorrect_password));
-                mPasswordView.requestFocus();
-            }
-        }
-
-        @Override
-        protected void onCancelled() {
-            mAuthTask = null;
-            showProgress(false);
-        }
-
-        private Map<String, String> packParams() {
-            Map<String, String> map = new HashMap<>();
-            map.put("grant_type", getString(R.string.grant_type));
-            map.put("username", mEmail);
-            map.put("password", mPassword);
-            map.put("scope", getString(R.string.scope));
-            map.put("client_secret", getString(R.string.client_secret));
-            map.put("client_id", getString(R.string.client_id));
-            return map;
-        }
     }
 
     /**
