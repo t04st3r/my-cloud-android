@@ -8,7 +8,6 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
-import android.support.annotation.RequiresApi;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.app.LoaderManager.LoaderCallbacks;
@@ -17,13 +16,11 @@ import android.content.CursorLoader;
 import android.content.Loader;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.AsyncTask;
 
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -37,9 +34,9 @@ import android.widget.TextView;
 import org.hopto.mycloud.mycloud.api.AuthRequest;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static android.Manifest.permission.READ_CONTACTS;
 
@@ -108,7 +105,9 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         return this.mPasswordView;
     }
 
-
+    /**
+     * set the auth async task to null
+     */
     public void destroyAuthTask(){
         this.mAuthTask = null;
     }
@@ -210,12 +209,13 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     }
 
     private boolean isEmailValid(String email) {
-        //TODO: Replace this with your own logic
-        return email.contains("@");
+        final String re = "^[a-z0-9_@+.-]{3,15}$";
+        Pattern pattern = Pattern.compile(re);
+        Matcher matcher = pattern.matcher(email);
+        return matcher.matches();
     }
 
     private boolean isPasswordValid(String password) {
-        //TODO: Replace this with your own logic
         return password.length() > 4;
     }
 
